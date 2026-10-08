@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Passport Photo Maker</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <header class="app-header">
+    <h1>📸 Passport Photo Maker</h1>
+  </header>
+
+  <main class="app-main">
+
+    <!-- ============ CONTROLS ============ -->
+    <aside class="controls">
+
+      <section class="panel">
+        <h2>1 · Upload
+          <button class="info" data-help="upload" aria-label="Help: upload">ⓘ</button>
+        </h2>
+        <div class="dropzone" id="dropzone">
+          <p>Drag &amp; drop photos here</p>
+          <p>or</p>
+          <button class="btn primary" type="button">Choose photos</button>
+          <input type="file" id="fileInput" accept="image/*" multiple hidden>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>2 · Photos &amp; copies
+          <button class="info" data-help="slots" aria-label="Help: photos and copies">ⓘ</button>
+        </h2>
+        <div class="slots" id="slots"></div>
+      </section>
+
+      <section class="panel">
+        <h2>3 · Paper size
+          <button class="info" data-help="paper" aria-label="Help: paper size">ⓘ</button>
+        </h2>
+        <div class="paper-row">
+          <select id="paperSelect"></select>
+          <button id="btnSwap" class="btn" type="button" title="Rotate paper">⇄</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>4 · Default photo size
+          <button class="info" data-help="defaultSize" aria-label="Help: default photo size">ⓘ</button>
+        </h2>
+        <select id="sizeSelect"></select>
+        <button id="btnCustomize" class="btn ghost" type="button">🎛 Customize size…</button>
+        <div class="custom-size hidden" id="customSize">
+          <label>Width (mm)
+            <input type="number" id="customW" min="10" max="300" step="0.5" value="35">
+          </label>
+          <label>Height (mm)
+            <input type="number" id="customH" min="10" max="300" step="0.5" value="45">
+          </label>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>5 · Background <span class="h2-note">(default)</span>
+          <button class="info" data-help="background" aria-label="Help: background">ⓘ</button>
+        </h2>
+        <div class="swatches">
+          <button class="swatch active" data-bg="none" title="No background">✕</button>
+          <button class="swatch" data-bg="#ffffff" style="--sw:#ffffff" title="White"></button>
+          <button class="swatch" data-bg="#e8e8e8" style="--sw:#e8e8e8" title="Light gray"></button>
+          <button class="swatch" data-bg="#bfdcff" style="--sw:#bfdcff" title="Light blue"></button>
+          <button class="swatch" data-bg="#4a90d9" style="--sw:#4a90d9" title="Passport blue"></button>
+          <button class="swatch" data-bg="#d43f3f" style="--sw:#d43f3f" title="Red"></button>
+          <label class="swatch custom" title="Custom color">
+            <input type="color" id="bgColor" value="#ffffff">
+          </label>
+        </div>
+        <p class="panel-note">Default for new uploads — each photo card has its own "BG color" picker</p>
+      </section>
+
+      <section class="panel">
+        <h2>6 · Adjustments — applies to ALL photos
+          <button class="info" data-help="adjust" aria-label="Help: adjustments">ⓘ</button>
+        </h2>
+
+        <div class="slider-label"><span>Brightness</span><span id="valBright">0</span></div>
+        <input type="range" id="adjBright" min="-50" max="50" step="1" value="0">
+
+        <div class="slider-label"><span>Contrast</span><span id="valContrast">0</span></div>
+        <input type="range" id="adjContrast" min="-50" max="50" step="1" value="0">
+
+        <div class="slider-label"><span>Saturation</span><span id="valSat">0</span></div>
+        <input type="range" id="adjSat" min="-50" max="50" step="1" value="0">
+
+        <div class="slider-label"><span>Photo border</span><span id="valBorder">0 mm</span></div>
+        <input type="range" id="adjBorder" min="0" max="5" step="0.5" value="0">
+
+        <label class="check-row">
+          <input type="checkbox" id="adjCut" checked>
+          Cut guides (lines to cut along)
+        </label>
+
+        <button id="adjReset" class="btn ghost" type="button">↺ Reset all</button>
+      </section>
+
+      <section class="panel">
+        <h2>7 · Print
+          <button class="info" data-help="print" aria-label="Help: print">ⓘ</button>
+        </h2>
+
+        <div class="slider-label"><span>Print brightness boost</span><span id="valBoost">+10%</span></div>
+        <input type="range" id="printBoost" min="0" max="30" step="1" value="10">
+
+        <button id="btnPreviewFinal" class="btn ghost" type="button">👁 Preview final output</button>
+        <button id="btnPrint" class="btn primary print-btn" type="button">🖨 Print / Save PDF</button>
+      </section>
+
+    </aside>
+
+    <!-- ============ LIVE PREVIEW ============ -->
+    <section class="preview-wrap">
+      <div class="preview-bar">
+        <span>Live preview
+          <button class="info" data-help="preview" aria-label="Help: live preview">ⓘ</button>
+        </span>
+
+        <button id="btnAspect" class="btn toggle active" type="button"
+                title="Lock = true proportions · Unlock = fill the screen">
+          🔒 Aspect locked
+        </button>
+
+        <div class="pager hidden" id="pager">
+          <button id="btnPrev" class="pager-btn" type="button" title="Previous page">◀</button>
+          <span id="pageIndicator">1 / 1</span>
+          <button id="btnNext" class="pager-btn" type="button" title="Next page">▶</button>
+        </div>
+
+        <span id="previewInfo">–</span>
+      </div>
+      <div class="preview-stage" id="stage"></div>
+    </section>
+
+  </main>
+
+  <!-- ============ CROP MODAL ============ -->
+  <div class="modal-overlay hidden" id="cropModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h3>✂ Crop photo</h3>
+        <button id="cropClose" class="tray-del" type="button" title="Close without saving">✕</button>
+      </div>
+
+      <div class="modal-sub" id="cropName"></div>
+
+      <div class="crop-controls">
+        <label>Frame aspect (from this photo's sizes)
+          <select id="cropAspect"></select>
+        </label>
+      </div>
+
+      <div class="crop-viewport">
+        <div class="crop-frame" id="cropFrame">
+          <img id="cropImg" alt="" draggable="false">
+        </div>
+      </div>
+
+      <div class="zoom-row">
+        <span>−</span>
+        <input type="range" id="cropZoom" min="1" max="6" step="0.01" value="1">
+        <span>+</span>
+      </div>
+
+      <p class="crop-hint">Drag the photo to position it · slider / mouse-wheel / pinch to zoom</p>
+
+      <div class="modal-actions">
+        <button id="cropReset" class="btn ghost-inline" type="button">Reset</button>
+        <button id="cropApply" class="btn primary" type="button">Apply crop</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ LIGHTING MODAL ============ -->
+  <div class="modal-overlay hidden" id="lightModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h3>☀️ Studio lighting</h3>
+        <button id="lightClose" class="tray-del" type="button" title="Close without saving">✕</button>
+      </div>
+
+      <div class="modal-sub" id="lightName"></div>
+
+      <div class="light-preview-wrap">
+        <img id="lightImg" alt="">
+        <div class="light-status" id="lightStatus"></div>
+      </div>
+
+      <div class="slider-label"><span>Even out lighting</span><span id="valLightStrength">85%</span></div>
+      <input type="range" id="lightStrength" min="0" max="100" step="1" value="85">
+
+      <div class="slider-label"><span>Brightness</span><span id="valLightBright">55</span></div>
+      <input type="range" id="lightBright" min="0" max="100" step="1" value="55">
+
+      <p class="crop-hint">"Even out lighting" flattens dark sides &amp; shadows · "Brightness" sets the studio light level</p>
+
+      <div class="modal-actions">
+        <button id="lightRemove" class="btn ghost-inline hidden" type="button">Remove lighting</button>
+        <button id="lightCancel" class="btn ghost-inline" type="button">Cancel</button>
+        <button id="lightApply" class="btn primary" type="button">Apply</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ FINAL OUTPUT MODAL ============ -->
+  <div class="modal-overlay hidden" id="finalModal">
+    <div class="modal wide">
+      <div class="modal-head">
+        <h3>👁 Final output (300 DPI)</h3>
+        <button id="finalClose" class="tray-del" type="button" title="Close">✕</button>
+      </div>
+      <p class="crop-hint" id="finalInfo"></p>
+      <div class="final-pages" id="finalPages"></div>
+      <div class="modal-actions">
+        <button id="finalPrint" class="btn primary" type="button">🖨 Print / Save PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- hidden area used only for printing -->
+  <div id="printRoot"></div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
